@@ -1,5 +1,6 @@
 using System;
 using Microsoft.EntityFrameworkCore;
+using System.Reflection;
 using ClinicApi.Infrastructure.Context;
 using ClinicApi.Infraestructure.Repositories;
 using ClinicApi.Domain.Repositories;
@@ -23,7 +24,12 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 );
 
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+builder.Services.AddSwaggerGen(c =>
+{
+    var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
+    var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+    c.IncludeXmlComments(xmlPath);
+});
 
 var app = builder.Build();
 

@@ -1,7 +1,7 @@
 using ClinicApi.Domain.Entities;
+using ClinicApi.Domain.Repositories;
 using ClinicApi.Infrastructure.Context;
 using Microsoft.EntityFrameworkCore;
-using ClinicApi.Domain.Repositories;
 
 namespace ClinicApi.Infraestructure.Repositories
 {
@@ -14,32 +14,28 @@ namespace ClinicApi.Infraestructure.Repositories
             _context = context;
         }
 
-        public async Task<List<Doctor>> GetAll()
-        {
-            return await _context.Doctors.ToListAsync();
-        }
+        public IQueryable<Doctor> Query()
+            => _context.Doctors.AsQueryable();
 
-        public async Task<Doctor?> GetById(int id)
-        {
-            return await _context.Doctors.FindAsync(id);
-        }
+        public Task<Doctor?> GetById(int id)
+            => _context.Doctors.FindAsync(id).AsTask();
 
-        public async Task Add(Doctor doctor)
+        public Task Add(Doctor doctor)
         {
             _context.Doctors.Add(doctor);
-            await _context.SaveChangesAsync();
+            return _context.SaveChangesAsync();
         }
 
-        public async Task Update(Doctor doctor)
+        public Task Update(Doctor doctor)
         {
             _context.Doctors.Update(doctor);
-            await _context.SaveChangesAsync();
+            return _context.SaveChangesAsync();
         }
 
-        public async Task Delete(Doctor doctor)
+        public Task Delete(Doctor doctor)
         {
             _context.Doctors.Remove(doctor);
-            await _context.SaveChangesAsync();
+            return _context.SaveChangesAsync();
         }
     }
 }

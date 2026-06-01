@@ -4,7 +4,7 @@ namespace ClinicApi.Domain.Repositories
 {
     public interface IDoctorRepository
     {
-        Task<List<Doctor>> GetAll();
+        IQueryable<Doctor> Query();
         Task<Doctor?> GetById(int id);
         Task Add(Doctor doctor);
         Task Update(Doctor doctor);

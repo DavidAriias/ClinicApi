@@ -138,3 +138,5 @@
 /Users/davidarias/Documents/projects/ClinicApi/obj/Debug/net10.0/ClinicApi.pdb
 /Users/davidarias/Documents/projects/ClinicApi/obj/Debug/net10.0/ClinicApi.genruntimeconfig.cache
 /Users/davidarias/Documents/projects/ClinicApi/obj/Debug/net10.0/ref/ClinicApi.dll
+/Users/davidarias/Documents/projects/ClinicApi/bin/Debug/net10.0/ClinicApi.xml
+/Users/davidarias/Documents/projects/ClinicApi/obj/Debug/net10.0/ClinicApi.xml

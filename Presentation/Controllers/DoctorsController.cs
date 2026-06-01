@@ -6,6 +6,8 @@ namespace ClinicApi.Presentation.Controllers
 {
     [ApiController]
     [Route("api/doctors")]
+    [Produces("application/json")]
+    [Tags("Doctors")]
     public class DoctorsController : ControllerBase
     {
         private readonly DoctorService _service;
@@ -15,11 +17,35 @@ namespace ClinicApi.Presentation.Controllers
             _service = service;
         }
 
+     
+        /// <summary>
+        /// Get all doctors with pagination
+        /// </summary>
+        /// <remarks>
+        /// Returns a paginated list of doctors.
+        /// </remarks>
         [HttpGet]
-        public async Task<IActionResult> GetAll()
-            => Ok(await _service.GetAll());
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        public async Task<IActionResult> GetAll(int page = 1, int pageSize = 10)
+        {
+            var result = await _service.GetAll(page, pageSize);
 
+            return Ok(new
+            {
+                data = result.Data,
+                total = result.Total,
+                page = result.Page,
+                pageSize = result.PageSize
+            });
+        }
+
+      
+        /// <summary>
+        /// Get doctor by id
+        /// </summary>
         [HttpGet("{id}")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> GetById(int id)
         {
             var doctor = await _service.GetById(id);
@@ -30,32 +56,70 @@ namespace ClinicApi.Presentation.Controllers
             return Ok(doctor);
         }
 
+      
+        /// <summary>
+        /// Create a new doctor
+        /// </summary>
+        /// <remarks>
+        /// Name max length: 100 characters
+        /// </remarks>
         [HttpPost]
+        [ProducesResponseType(StatusCodes.Status201Created)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> Create(CreateDoctorDto dto)
         {
-            if (string.IsNullOrWhiteSpace(dto.Name))
-                return BadRequest(new { message = "Name is required" });
+            try
+            {
+                var doctor = await _service.Create(dto.Name, dto.Specialty);
 
-            var doctor = await _service.Create(dto.Name, dto.Specialty);
-
-            return CreatedAtAction(
-                nameof(GetById),
-                new { id = doctor.Id },
-                doctor
-            );
+                return CreatedAtAction(
+                    nameof(GetById),
+                    new { id = doctor.Id },
+                    doctor
+                );
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
         }
+
+      
+        /// <summary>
+        /// Update an existing doctor
+        /// </summary>
         [HttpPut("{id}")]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> Update(int id, UpdateDoctorDto dto)
         {
-            var result = await _service.Update(id, dto.Name, dto.Specialty, dto.IsActive);
+            try
+            {
+                var result = await _service.Update(
+                    id,
+                    dto.Name,
+                    dto.Specialty,
+                    dto.IsActive
+                );
 
-            if (!result)
-                return NotFound(new { message = "Doctor not found" });
+                if (!result)
+                    return NotFound(new { message = "Doctor not found" });
 
-            return NoContent();
+                return NoContent();
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
         }
 
+        /// <summary>
+        /// Delete a doctor by id
+        /// </summary>
         [HttpDelete("{id}")]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> Delete(int id)
         {
             var result = await _service.Delete(id);
