@@ -12,13 +12,12 @@ using ClinicApi.Presentation.Middleware;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container
+// Services
 builder.Services.AddScoped<IDoctorRepository, DoctorRepository>();
 builder.Services.AddScoped<DoctorService>();
 
 builder.Services.AddScoped<IAppointmentRepository, AppointmentRepository>();
 builder.Services.AddScoped<AppointmentService>();
-
 
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
@@ -34,6 +33,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 );
 
 builder.Services.AddEndpointsApiExplorer();
+
 builder.Services.AddSwaggerGen(c =>
 {
     var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
@@ -43,10 +43,38 @@ builder.Services.AddSwaggerGen(c =>
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
+
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+
+    var retries = 10;
+
+    while (retries > 0)
+    {
+        try
+        {
+            Console.WriteLine("Applying migrations...");
+            db.Database.Migrate();
+            Console.WriteLine("Migrations applied successfully.");
+            break;
+        }
+        catch (Exception ex)
+        {
+            retries--;
+            Console.WriteLine($"Waiting for SQL Server... {ex.Message}");
+
+            if (retries == 0)
+                throw;
+
+            Thread.Sleep(5000);
+        }
+    }
+}
+
+// Pipeline
 app.UseSwagger();
 app.UseSwaggerUI();
-
 
 app.UseHttpsRedirection();
 
