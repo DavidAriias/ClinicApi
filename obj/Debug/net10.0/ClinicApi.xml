@@ -16,7 +16,7 @@
         <member name="M:ClinicApi.Migrations.InitialCreate.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
             <inheritdoc />
         </member>
-        <member name="M:ClinicApi.Presentation.Controllers.AppointmentsController.GetAll(System.Int32,System.Int32)">
+        <member name="M:ClinicApi.Presentation.Controllers.AppointmentsController.GetAll(System.Int32,System.Int32,System.Nullable{System.Int32},System.String,System.String,System.Nullable{System.DateTime},System.Nullable{System.DateTime},System.String,System.String)">
             <summary>
             Get all appointments with pagination
             </summary>
@@ -57,7 +57,7 @@
             Changes status to Cancelled instead of deleting.
             </remarks>
         </member>
-        <member name="M:ClinicApi.Presentation.Controllers.DoctorsController.GetAll(System.Int32,System.Int32)">
+        <member name="M:ClinicApi.Presentation.Controllers.DoctorsController.GetAll(System.Int32,System.Int32,System.String,System.String,System.Nullable{System.Boolean},System.String,System.String)">
             <summary>
             Get all doctors with pagination
             </summary>

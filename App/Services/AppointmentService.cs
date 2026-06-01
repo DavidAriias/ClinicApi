@@ -20,19 +20,51 @@ namespace ClinicApi.App.Services
             _doctorRepo = doctorRepo;
         }
 
-     
+
         public async Task<PagedResult<Appointment>> GetAll(
-            int page = 1,
-            int pageSize = 10)
+             int page = 1,
+             int pageSize = 10,
+             int? doctorId = null,
+             string? status = null,
+             string? patientName = null,
+             DateTime? from = null,
+             DateTime? to = null,
+             string sortBy = "appointmentDate",
+             string sortOrder = "asc")
         {
             pageSize = pageSize > 50 ? 50 : pageSize;
 
             var query = _repo.Query();
 
+            if (doctorId.HasValue)
+                query = query.Where(x => x.DoctorId == doctorId);
+
+            if (!string.IsNullOrWhiteSpace(status))
+                query = query.Where(x => x.Status == status);
+
+            if (!string.IsNullOrWhiteSpace(patientName))
+                query = query.Where(x => x.PatientName.Contains(patientName));
+
+            if (from.HasValue)
+                query = query.Where(x => x.AppointmentDate >= from);
+
+            if (to.HasValue)
+                query = query.Where(x => x.AppointmentDate <= to);
+
             var total = await query.CountAsync();
 
+          
+            query = (sortBy.ToLower(), sortOrder.ToLower()) switch
+            {
+                ("createdat", "desc") => query.OrderByDescending(x => x.CreatedAt),
+                ("createdat", _) => query.OrderBy(x => x.CreatedAt),
+
+                ("appointmentdate", "desc") => query.OrderByDescending(x => x.AppointmentDate),
+                _ => query.OrderBy(x => x.AppointmentDate)
+            };
+
+         
             var data = await query
-                .OrderBy(x => x.AppointmentDate)
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
                 .ToListAsync();
@@ -46,11 +78,11 @@ namespace ClinicApi.App.Services
             };
         }
 
-       
+
         public Task<Appointment?> GetById(int id)
             => _repo.GetById(id);
 
-      
+
         public async Task<Appointment> Create(CreateAppointmentDto dto)
         {
             if (string.IsNullOrWhiteSpace(dto.PatientName))
@@ -150,7 +182,7 @@ namespace ClinicApi.App.Services
             return true;
         }
 
- 
+
         public async Task<bool> Cancel(int id)
         {
             var appointment = await _repo.GetById(id);

@@ -17,7 +17,7 @@ namespace ClinicApi.Presentation.Controllers
             _service = service;
         }
 
- 
+
         /// <summary>
         /// Get all appointments with pagination
         /// </summary>
@@ -26,9 +26,29 @@ namespace ClinicApi.Presentation.Controllers
         /// </remarks>
         [HttpGet]
         [ProducesResponseType(StatusCodes.Status200OK)]
-        public async Task<IActionResult> GetAll(int page = 1, int pageSize = 10)
+        public async Task<IActionResult> GetAll(
+            int page = 1,
+            int pageSize = 10,
+            int? doctorId = null,
+            string? status = null,
+            string? patientName = null,
+            DateTime? from = null,
+            DateTime? to = null,
+            string sortBy = "appointmentDate",
+            string sortOrder = "asc"
+            )
         {
-            var result = await _service.GetAll(page, pageSize);
+            var result = await _service.GetAll(
+                page,
+                pageSize,
+                doctorId,
+                status,
+                patientName,
+                from,
+                to,
+                sortBy,
+                sortOrder
+            );
 
             return Ok(new
             {

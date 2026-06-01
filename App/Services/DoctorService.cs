@@ -13,17 +13,47 @@ namespace ClinicApi.App.Services
             _repo = repo;
         }
 
-       
-        public async Task<PagedResult<Doctor>> GetAll(int page = 1, int pageSize = 10)
+
+        public async Task<PagedResult<Doctor>> GetAll(
+              int page = 1,
+              int pageSize = 10,
+              string? name = null,
+              string? specialty = null,
+              bool? isActive = null,
+              string sortBy = "name",
+              string sortOrder = "asc")
         {
             pageSize = pageSize > 50 ? 50 : pageSize;
 
             var query = _repo.Query();
 
+
+            if (!string.IsNullOrWhiteSpace(name))
+                query = query.Where(x => x.Name.Contains(name));
+
+            if (!string.IsNullOrWhiteSpace(specialty))
+                query = query.Where(x => x.Specialty.Contains(specialty));
+
+            if (isActive.HasValue)
+                query = query.Where(x => x.IsActive == isActive);
+
+
             var total = query.Count();
 
+            query = (sortBy.ToLower(), sortOrder.ToLower()) switch
+            {
+                ("specialty", "desc") => query.OrderByDescending(x => x.Specialty),
+                ("specialty", _) => query.OrderBy(x => x.Specialty),
+
+                ("createdat", "desc") => query.OrderByDescending(x => x.CreatedAt),
+                ("createdat", _) => query.OrderBy(x => x.CreatedAt),
+
+                ("name", "desc") => query.OrderByDescending(x => x.Name),
+                _ => query.OrderBy(x => x.Name)
+            };
+
+
             var data = query
-                .OrderBy(x => x.Name)
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
                 .ToList();
@@ -37,11 +67,11 @@ namespace ClinicApi.App.Services
             };
         }
 
-      
+
         public Task<Doctor?> GetById(int id)
             => _repo.GetById(id);
 
-      
+
         public async Task<Doctor> Create(string name, string specialty)
         {
             if (string.IsNullOrWhiteSpace(name))
@@ -65,7 +95,7 @@ namespace ClinicApi.App.Services
             return doctor;
         }
 
-      
+
         public async Task<bool> Update(int id, string name, string specialty, bool isActive)
         {
             var doctor = await _repo.GetById(id);
@@ -90,7 +120,7 @@ namespace ClinicApi.App.Services
             return true;
         }
 
-     
+
         public async Task<bool> Delete(int id)
         {
             var doctor = await _repo.GetById(id);

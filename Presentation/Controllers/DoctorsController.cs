@@ -17,7 +17,7 @@ namespace ClinicApi.Presentation.Controllers
             _service = service;
         }
 
-     
+
         /// <summary>
         /// Get all doctors with pagination
         /// </summary>
@@ -26,9 +26,24 @@ namespace ClinicApi.Presentation.Controllers
         /// </remarks>
         [HttpGet]
         [ProducesResponseType(StatusCodes.Status200OK)]
-        public async Task<IActionResult> GetAll(int page = 1, int pageSize = 10)
+        public async Task<IActionResult> GetAll(
+       int page = 1,
+       int pageSize = 10,
+       string? name = null,
+       string? specialty = null,
+       bool? isActive = null,
+       string sortBy = "name",
+       string sortOrder = "asc")
         {
-            var result = await _service.GetAll(page, pageSize);
+            var result = await _service.GetAll(
+                page,
+                pageSize,
+                name,
+                specialty,
+                isActive,
+                sortBy,
+                sortOrder
+            );
 
             return Ok(new
             {
@@ -39,7 +54,7 @@ namespace ClinicApi.Presentation.Controllers
             });
         }
 
-      
+
         /// <summary>
         /// Get doctor by id
         /// </summary>
@@ -56,7 +71,7 @@ namespace ClinicApi.Presentation.Controllers
             return Ok(doctor);
         }
 
-      
+
         /// <summary>
         /// Create a new doctor
         /// </summary>
@@ -84,7 +99,7 @@ namespace ClinicApi.Presentation.Controllers
             }
         }
 
-      
+
         /// <summary>
         /// Update an existing doctor
         /// </summary>
