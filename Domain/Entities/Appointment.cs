@@ -1,3 +1,5 @@
+using ClinicApi.Domain.Enums;
+
 namespace ClinicApi.Domain.Entities
 {
     public class Appointment
@@ -11,7 +13,7 @@ namespace ClinicApi.Domain.Entities
         public DateTime AppointmentDate { get; set; }
         public int DurationMinutes { get; set; }
 
-        public string Status { get; set; } = "Scheduled";
+        public string Status { get; set; } = AppointmentStatus.Scheduled;
         public string? Notes { get; set; }
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;

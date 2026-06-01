@@ -22,22 +22,22 @@ namespace ClinicApi.App.Services
 
 
         public async Task<PagedResult<Appointment>> GetAll(
-             int page = 1,
-             int pageSize = 10,
-             int? doctorId = null,
-             string? status = null,
-             string? patientName = null,
-             DateTime? from = null,
-             DateTime? to = null,
-             string sortBy = "appointmentDate",
-             string sortOrder = "asc")
+            int page = 1,
+            int pageSize = 10,
+            int? doctorId = null,
+            string? status = null,
+            string? patientName = null,
+            DateTime? from = null,
+            DateTime? to = null,
+            string sortBy = "appointmentDate",
+            string sortOrder = "asc")
         {
             pageSize = pageSize > 50 ? 50 : pageSize;
 
             var query = _repo.Query();
 
             if (doctorId.HasValue)
-                query = query.Where(x => x.DoctorId == doctorId);
+                query = query.Where(x => x.DoctorId == doctorId.Value);
 
             if (!string.IsNullOrWhiteSpace(status))
                 query = query.Where(x => x.Status == status);
@@ -46,13 +46,12 @@ namespace ClinicApi.App.Services
                 query = query.Where(x => x.PatientName.Contains(patientName));
 
             if (from.HasValue)
-                query = query.Where(x => x.AppointmentDate >= from);
+                query = query.Where(x => x.AppointmentDate >= from.Value);
 
             if (to.HasValue)
-                query = query.Where(x => x.AppointmentDate <= to);
+                query = query.Where(x => x.AppointmentDate <= to.Value);
 
             var total = await query.CountAsync();
-
 
             query = (sortBy.ToLower(), sortOrder.ToLower()) switch
             {
@@ -62,7 +61,6 @@ namespace ClinicApi.App.Services
                 ("appointmentdate", "desc") => query.OrderByDescending(x => x.AppointmentDate),
                 _ => query.OrderBy(x => x.AppointmentDate)
             };
-
 
             var data = await query
                 .Skip((page - 1) * pageSize)
@@ -82,7 +80,6 @@ namespace ClinicApi.App.Services
         public Task<Appointment?> GetById(int id)
             => _repo.GetById(id);
 
-
         public async Task<Appointment> Create(CreateAppointmentDto dto)
         {
             if (dto.AppointmentDate <= DateTime.UtcNow)
@@ -94,7 +91,7 @@ namespace ClinicApi.App.Services
             var doctor = await _doctorRepo.GetById(dto.DoctorId);
 
             if (doctor == null || !doctor.IsActive)
-                throw new Exception("Doctor not available");
+                throw new InvalidOperationException("Doctor not available");
 
             var existing = await _repo.GetByDoctor(dto.DoctorId);
 
@@ -102,7 +99,7 @@ namespace ClinicApi.App.Services
             var newEnd = dto.AppointmentDate.AddMinutes(dto.DurationMinutes);
 
             if (HasOverlap(existing, newStart, newEnd, dto.DoctorId))
-                throw new Exception("Appointment overlaps with another appointment");
+                throw new InvalidOperationException("Appointment overlaps with another appointment");
 
             var appointment = new Appointment
             {
@@ -119,6 +116,7 @@ namespace ClinicApi.App.Services
             return appointment;
         }
 
+ 
         public async Task<bool> Update(int id, UpdateAppointmentDto dto)
         {
             var appointment = await _repo.GetById(id);
@@ -127,12 +125,21 @@ namespace ClinicApi.App.Services
                 return false;
 
             if (appointment.Status == AppointmentStatus.Completed)
-                throw new Exception("Cannot modify completed appointment");
+                throw new InvalidOperationException("Cannot modify completed appointment");
+
+            if (appointment.Status == AppointmentStatus.Cancelled)
+                throw new InvalidOperationException("Cannot modify cancelled appointment");
+
+            if (dto.AppointmentDate <= DateTime.UtcNow)
+                throw new ArgumentException("AppointmentDate must be in the future");
+
+            if (dto.DurationMinutes <= 0)
+                throw new ArgumentException("Duration must be greater than 0");
 
             var doctor = await _doctorRepo.GetById(dto.DoctorId);
 
             if (doctor == null || !doctor.IsActive)
-                throw new Exception("Doctor not available");
+                throw new InvalidOperationException("Doctor not available");
 
             var existing = await _repo.GetByDoctor(dto.DoctorId);
 
@@ -140,7 +147,7 @@ namespace ClinicApi.App.Services
             var newEnd = dto.AppointmentDate.AddMinutes(dto.DurationMinutes);
 
             if (HasOverlap(existing, newStart, newEnd, dto.DoctorId, id))
-                throw new Exception("Appointment overlaps with another appointment");
+                throw new InvalidOperationException("Appointment overlaps with another appointment");
 
             appointment.DoctorId = dto.DoctorId;
             appointment.PatientName = dto.PatientName;
@@ -155,25 +162,22 @@ namespace ClinicApi.App.Services
 
         public async Task<bool> Cancel(int id)
         {
-            var doctor = await _repo.GetById(id);
+            var appointment = await _repo.GetById(id);
 
-            if (doctor == null)
+            if (appointment == null)
                 return false;
 
-            var appointments = await _repo.GetByDoctor(id);
+            if (appointment.Status == AppointmentStatus.Completed)
+                throw new InvalidOperationException("Cannot cancel a completed appointment");
 
-            var hasFutureAppointments = appointments.Any(a =>
-                a.Status == AppointmentStatus.Scheduled &&
-                a.AppointmentDate > DateTime.UtcNow
-            );
+            appointment.Status = AppointmentStatus.Cancelled;
 
-            if (hasFutureAppointments)
-                throw new Exception("Doctor has future appointments");
+            await _repo.Update(appointment);
 
-            await _repo.Delete(doctor);
             return true;
         }
 
+   
         private bool HasOverlap(
             List<Appointment> appointments,
             DateTime newStart,
@@ -184,7 +188,7 @@ namespace ClinicApi.App.Services
             return appointments.Any(a =>
                 a.DoctorId == doctorId &&
                 a.Status != AppointmentStatus.Cancelled &&
-                (ignoreAppointmentId == null || a.Id != ignoreAppointmentId) &&
+                (!ignoreAppointmentId.HasValue || a.Id != ignoreAppointmentId.Value) &&
                 newStart < a.AppointmentDate.AddMinutes(a.DurationMinutes) &&
                 newEnd > a.AppointmentDate
             );
