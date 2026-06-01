@@ -32,10 +32,12 @@ namespace ClinicApi.Infraestructure.Repositories
             return _context.SaveChangesAsync();
         }
 
-        public Task Delete(Doctor doctor)
+        public async Task Delete(Doctor doctor)
         {
-            _context.Doctors.Remove(doctor);
-            return _context.SaveChangesAsync();
+            doctor.IsActive = false;
+
+            _context.Doctors.Update(doctor);
+            await _context.SaveChangesAsync();
         }
     }
 }
