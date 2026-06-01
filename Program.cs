@@ -54,15 +54,12 @@ using (var scope = app.Services.CreateScope())
     {
         try
         {
-            Console.WriteLine("Applying migrations...");
             db.Database.Migrate();
-            Console.WriteLine("Migrations applied successfully.");
             break;
         }
         catch (Exception ex)
         {
             retries--;
-            Console.WriteLine($"Waiting for SQL Server... {ex.Message}");
 
             if (retries == 0)
                 throw;
