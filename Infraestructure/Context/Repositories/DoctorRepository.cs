@@ -1,8 +1,9 @@
 using ClinicApi.Domain.Entities;
 using ClinicApi.Infrastructure.Context;
 using Microsoft.EntityFrameworkCore;
+using ClinicApi.Domain.Repositories;
 
-namespace ClinicApi.Domain.Repositories
+namespace ClinicApi.Infraestructure.Repositories
 {
     public class DoctorRepository : IDoctorRepository
     {
