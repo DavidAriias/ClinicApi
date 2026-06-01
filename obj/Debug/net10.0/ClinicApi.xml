@@ -18,75 +18,82 @@
         </member>
         <member name="M:ClinicApi.Presentation.Controllers.AppointmentsController.GetAll(System.Int32,System.Int32,System.Nullable{System.Int32},System.String,System.String,System.Nullable{System.DateTime},System.Nullable{System.DateTime},System.String,System.String)">
             <summary>
-            Get all appointments with pagination
+            Retrieves a paginated list of appointments with optional filters and sorting.
             </summary>
             <remarks>
-            Supports page and pageSize query parameters.
+            Supports filtering by doctor, status, patient name and date range.
+            Also supports sorting by appointmentDate or createdAt.
             </remarks>
         </member>
         <member name="M:ClinicApi.Presentation.Controllers.AppointmentsController.GetById(System.Int32)">
             <summary>
-            Get appointment by id
+            Retrieves a specific appointment by its unique identifier.
             </summary>
         </member>
         <member name="M:ClinicApi.Presentation.Controllers.AppointmentsController.Create(ClinicApi.App.DTOs.CreateAppointmentDto)">
             <summary>
-            Create a new appointment
+            Creates a new appointment.
             </summary>
             <remarks>
-            Business rules:
-            - Must not overlap with other active appointments of same doctor
+            Business rules enforced:
+            - No overlapping appointments for the same doctor
             - Doctor must be active
-            - Appointment must be in the future
+            - Appointment must be scheduled in the future
             </remarks>
         </member>
         <member name="M:ClinicApi.Presentation.Controllers.AppointmentsController.Update(System.Int32,ClinicApi.App.DTOs.UpdateAppointmentDto)">
             <summary>
-            Update an existing appointment
+            Updates an existing appointment.
             </summary>
             <remarks>
-            Cannot modify completed appointments.
-            Validates schedule conflicts.
+            Cannot modify completed appointments and validates schedule conflicts.
             </remarks>
         </member>
         <member name="M:ClinicApi.Presentation.Controllers.AppointmentsController.Cancel(System.Int32)">
             <summary>
-            Cancel an appointment
+            Cancels an existing appointment.
             </summary>
             <remarks>
-            Changes status to Cancelled instead of deleting.
+            The appointment is not deleted, only its status is set to Cancelled.
             </remarks>
         </member>
         <member name="M:ClinicApi.Presentation.Controllers.DoctorsController.GetAll(System.Int32,System.Int32,System.String,System.String,System.Nullable{System.Boolean},System.String,System.String)">
             <summary>
-            Get all doctors with pagination
+            Retrieves a paginated list of doctors with optional filters and sorting.
             </summary>
             <remarks>
-            Returns a paginated list of doctors.
+            Supports filtering by name, specialty and active status.
+            Also supports sorting by name or createdAt.
             </remarks>
         </member>
         <member name="M:ClinicApi.Presentation.Controllers.DoctorsController.GetById(System.Int32)">
             <summary>
-            Get doctor by id
+            Retrieves a doctor by its unique identifier.
             </summary>
         </member>
         <member name="M:ClinicApi.Presentation.Controllers.DoctorsController.Create(ClinicApi.App.DTOs.CreateDoctorDto)">
             <summary>
-            Create a new doctor
+            Creates a new doctor.
             </summary>
             <remarks>
-            Name max length: 100 characters
+            Business rules:
+            - Name is required
+            - Maximum length: 100 characters
+            - Specialty is required
             </remarks>
         </member>
         <member name="M:ClinicApi.Presentation.Controllers.DoctorsController.Update(System.Int32,ClinicApi.App.DTOs.UpdateDoctorDto)">
             <summary>
-            Update an existing doctor
+            Updates an existing doctor.
             </summary>
         </member>
         <member name="M:ClinicApi.Presentation.Controllers.DoctorsController.Delete(System.Int32)">
             <summary>
-            Delete a doctor by id
+            Deletes a doctor by id.
             </summary>
+            <remarks>
+            A doctor cannot be deleted if it has future appointments.
+            </remarks>
         </member>
         <member name="T:Program">
             <summary>

@@ -17,23 +17,23 @@ namespace ClinicApi.Presentation.Controllers
             _service = service;
         }
 
-
         /// <summary>
-        /// Get all doctors with pagination
+        /// Retrieves a paginated list of doctors with optional filters and sorting.
         /// </summary>
         /// <remarks>
-        /// Returns a paginated list of doctors.
+        /// Supports filtering by name, specialty and active status.
+        /// Also supports sorting by name or createdAt.
         /// </remarks>
         [HttpGet]
         [ProducesResponseType(StatusCodes.Status200OK)]
         public async Task<IActionResult> GetAll(
-       int page = 1,
-       int pageSize = 10,
-       string? name = null,
-       string? specialty = null,
-       bool? isActive = null,
-       string sortBy = "name",
-       string sortOrder = "asc")
+            int page = 1,
+            int pageSize = 10,
+            string? name = null,
+            string? specialty = null,
+            bool? isActive = null,
+            string sortBy = "name",
+            string sortOrder = "asc")
         {
             var result = await _service.GetAll(
                 page,
@@ -54,9 +54,8 @@ namespace ClinicApi.Presentation.Controllers
             });
         }
 
-
         /// <summary>
-        /// Get doctor by id
+        /// Retrieves a doctor by its unique identifier.
         /// </summary>
         [HttpGet("{id}")]
         [ProducesResponseType(StatusCodes.Status200OK)]
@@ -65,73 +64,62 @@ namespace ClinicApi.Presentation.Controllers
         {
             var doctor = await _service.GetById(id);
 
-            if (doctor == null)
+            if (doctor is null)
                 return NotFound(new { message = "Doctor not found" });
 
             return Ok(doctor);
         }
 
-
         /// <summary>
-        /// Create a new doctor
+        /// Creates a new doctor.
         /// </summary>
         /// <remarks>
-        /// Name max length: 100 characters
+        /// Business rules:
+        /// - Name is required
+        /// - Maximum length: 100 characters
+        /// - Specialty is required
         /// </remarks>
         [HttpPost]
         [ProducesResponseType(StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> Create(CreateDoctorDto dto)
         {
-            try
-            {
-                var doctor = await _service.Create(dto.Name, dto.Specialty);
+            var doctor = await _service.Create(dto.Name, dto.Specialty);
 
-                return CreatedAtAction(
-                    nameof(GetById),
-                    new { id = doctor.Id },
-                    doctor
-                );
-            }
-            catch (ArgumentException ex)
-            {
-                return BadRequest(new { message = ex.Message });
-            }
+            return CreatedAtAction(
+                nameof(GetById),
+                new { id = doctor.Id },
+                doctor
+            );
         }
 
-
         /// <summary>
-        /// Update an existing doctor
+        /// Updates an existing doctor.
         /// </summary>
         [HttpPut("{id}")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> Update(int id, UpdateDoctorDto dto)
         {
-            try
-            {
-                var result = await _service.Update(
-                    id,
-                    dto.Name,
-                    dto.Specialty,
-                    dto.IsActive
-                );
+            var result = await _service.Update(
+                id,
+                dto.Name,
+                dto.Specialty,
+                dto.IsActive
+            );
 
-                if (!result)
-                    return NotFound(new { message = "Doctor not found" });
+            if (!result)
+                return NotFound(new { message = "Doctor not found" });
 
-                return NoContent();
-            }
-            catch (ArgumentException ex)
-            {
-                return BadRequest(new { message = ex.Message });
-            }
+            return NoContent();
         }
 
         /// <summary>
-        /// Delete a doctor by id
+        /// Deletes a doctor by id.
         /// </summary>
+        /// <remarks>
+        /// A doctor cannot be deleted if it has future appointments.
+        /// </remarks>
         [HttpDelete("{id}")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]

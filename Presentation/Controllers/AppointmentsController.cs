@@ -17,12 +17,12 @@ namespace ClinicApi.Presentation.Controllers
             _service = service;
         }
 
-
         /// <summary>
-        /// Get all appointments with pagination
+        /// Retrieves a paginated list of appointments with optional filters and sorting.
         /// </summary>
         /// <remarks>
-        /// Supports page and pageSize query parameters.
+        /// Supports filtering by doctor, status, patient name and date range.
+        /// Also supports sorting by appointmentDate or createdAt.
         /// </remarks>
         [HttpGet]
         [ProducesResponseType(StatusCodes.Status200OK)]
@@ -36,7 +36,7 @@ namespace ClinicApi.Presentation.Controllers
             DateTime? to = null,
             string sortBy = "appointmentDate",
             string sortOrder = "asc"
-            )
+        )
         {
             var result = await _service.GetAll(
                 page,
@@ -50,18 +50,11 @@ namespace ClinicApi.Presentation.Controllers
                 sortOrder
             );
 
-            return Ok(new
-            {
-                data = result.Data,
-                total = result.Total,
-                page = result.Page,
-                pageSize = result.PageSize
-            });
+            return Ok(result);
         }
 
-
         /// <summary>
-        /// Get appointment by id
+        /// Retrieves a specific appointment by its unique identifier.
         /// </summary>
         [HttpGet("{id}")]
         [ProducesResponseType(StatusCodes.Status200OK)]
@@ -70,107 +63,70 @@ namespace ClinicApi.Presentation.Controllers
         {
             var result = await _service.GetById(id);
 
-            if (result == null)
+            if (result is null)
                 return NotFound(new { message = "Appointment not found" });
 
             return Ok(result);
         }
 
-
         /// <summary>
-        /// Create a new appointment
+        /// Creates a new appointment.
         /// </summary>
         /// <remarks>
-        /// Business rules:
-        /// - Must not overlap with other active appointments of same doctor
+        /// Business rules enforced:
+        /// - No overlapping appointments for the same doctor
         /// - Doctor must be active
-        /// - Appointment must be in the future
+        /// - Appointment must be scheduled in the future
         /// </remarks>
         [HttpPost]
         [ProducesResponseType(StatusCodes.Status201Created)]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        [ProducesResponseType(StatusCodes.Status409Conflict)]
         public async Task<IActionResult> Create(CreateAppointmentDto dto)
         {
-            try
-            {
-                var result = await _service.Create(dto);
+            var result = await _service.Create(dto);
 
-                return CreatedAtAction(
-                    nameof(GetById),
-                    new { id = result.Id },
-                    result
-                );
-            }
-            catch (ArgumentException ex)
-            {
-                return BadRequest(new { message = ex.Message });
-            }
-            catch (Exception ex)
-            {
-                return Conflict(new { message = ex.Message });
-            }
+            return CreatedAtAction(
+                nameof(GetById),
+                new { id = result.Id },
+                result
+            );
         }
 
-
         /// <summary>
-        /// Update an existing appointment
+        /// Updates an existing appointment.
         /// </summary>
         /// <remarks>
-        /// Cannot modify completed appointments.
-        /// Validates schedule conflicts.
+        /// Cannot modify completed appointments and validates schedule conflicts.
         /// </remarks>
         [HttpPut("{id}")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        [ProducesResponseType(StatusCodes.Status409Conflict)]
         public async Task<IActionResult> Update(int id, UpdateAppointmentDto dto)
         {
-            try
-            {
-                var result = await _service.Update(id, dto);
+            var result = await _service.Update(id, dto);
 
-                if (!result)
-                    return NotFound(new { message = "Appointment not found" });
+            if (!result)
+                return NotFound(new { message = "Appointment not found" });
 
-                return NoContent();
-            }
-            catch (ArgumentException ex)
-            {
-                return BadRequest(new { message = ex.Message });
-            }
-            catch (Exception ex)
-            {
-                return Conflict(new { message = ex.Message });
-            }
+            return NoContent();
         }
 
         /// <summary>
-        /// Cancel an appointment
+        /// Cancels an existing appointment.
         /// </summary>
         /// <remarks>
-        /// Changes status to Cancelled instead of deleting.
+        /// The appointment is not deleted, only its status is set to Cancelled.
         /// </remarks>
         [HttpPatch("{id}/cancel")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        [ProducesResponseType(StatusCodes.Status409Conflict)]
         public async Task<IActionResult> Cancel(int id)
         {
-            try
-            {
-                var result = await _service.Cancel(id);
+            var result = await _service.Cancel(id);
 
-                if (!result)
-                    return NotFound(new { message = "Appointment not found" });
+            if (!result)
+                return NotFound(new { message = "Appointment not found" });
 
-                return NoContent();
-            }
-            catch (Exception ex)
-            {
-                return Conflict(new { message = ex.Message });
-            }
+            return NoContent();
         }
     }
 }

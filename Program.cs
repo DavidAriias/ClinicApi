@@ -5,6 +5,8 @@ using ClinicApi.Infrastructure.Context;
 using ClinicApi.Infraestructure.Repositories;
 using ClinicApi.Domain.Repositories;
 using ClinicApi.App.Services;
+using ClinicApi.App.Common;
+using ClinicApi.Presentation.Middleware;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -41,6 +43,8 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+app.UseMiddleware<ExceptionMiddleware>();
 
 app.UseAuthorization();
 

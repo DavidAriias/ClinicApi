@@ -160,7 +160,7 @@ namespace ClinicApi.App.Services
             if (doctor == null)
                 return false;
 
-            var appointments = await _appointmentRepo.GetByDoctor(id);
+            var appointments = await _repo.GetByDoctor(id);
 
             var hasFutureAppointments = appointments.Any(a =>
                 a.Status == AppointmentStatus.Scheduled &&
